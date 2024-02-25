@@ -6,21 +6,25 @@ import {
   signOut,
 } from 'firebase/auth';
 import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { setUser } from '../store/userSlice';
 
 export default function Nav() {
-  const initialUserData = localStorage.getItem('user')
-    ? JSON.parse(localStorage.getItem('user'))
-    : {};
+  // const initialUserData = localStorage.getItem('user')
+  //   ? JSON.parse(localStorage.getItem('user'))
+  //   : {};
 
   const [show, setShow] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  // const [userData, setUserData] = useState(initialUserData);
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const auth = getAuth();
   const provider = new GoogleAuthProvider();
-  const [userData, setUserData] = useState(initialUserData);
+  const dispatch = useDispatch();
+  const userData = useSelector((state) => state.user);
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
@@ -58,8 +62,17 @@ export default function Nav() {
     signInWithPopup(auth, provider)
       .then((result) => {
         console.log('>>>>result', result);
-        setUserData(result.user);
-        localStorage.setItem('user', JSON.stringify(result.user));
+        // setUserData(result.user);
+
+        dispatch(
+          setUser({
+            id: result.user.uid,
+            email: result.user.email,
+            photoURL: result.user.photoURL,
+            displayName: result.user.displayName,
+          })
+        );
+        // localStorage.setItem('user', JSON.stringify(result.user));
       })
       .catch((error) => console.log(error));
   };
@@ -67,7 +80,7 @@ export default function Nav() {
   const handleSignOut = () => {
     signOut(auth)
       .then(() => {
-        setUserData({});
+        // setUserData({});
         navigate(`/`);
       })
       .catch((error) => {
@@ -76,7 +89,7 @@ export default function Nav() {
   };
 
   return (
-    <NavWrapper show={show}>
+    <NavWrapper $show={show}>
       <Logo>
         <img
           src='/images/logo.svg'
@@ -124,8 +137,8 @@ const DropDown = styled.div`
 
 const SignOut = styled.div`
   position: relative;
-  height: 48px;
-  width: 48px;
+  height: 40px;
+  width: 40px;
   display: flex;
   cursor: pointer;
   align-items: center;
@@ -177,7 +190,7 @@ const NavWrapper = styled.nav`
   left: 0;
   right: 0;
   height: 70px;
-  background-color: ${(props) => (props.show ? '#090b13' : 'transparent')};
+  background-color: ${(props) => (props.$show ? '#090b13' : 'transparent')};
   display: flex;
   justify-content: space-between;
   align-items: center;
